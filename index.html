@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JobFlirt - Swipe for Jobs</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    .job-container {
+      position: relative;
+      width: 300px;
+      height: 450px;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+
+    .job-card {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      overflow: hidden;
+      cursor: grab;
+    }
+
+    .job-info {
+      width: 100%;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(10px);
+      color: white;
+      text-align: center;
+    }
+
+    .job-info h2 {
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+
+    .job-info p {
+      font-size: 14px;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 12px 20px;
+      font-size: 18px;
+      border: none;
+      cursor: pointer;
+      border-radius: 50%;
+      margin: 10px;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn.reject {
+      background-color: #ff4d4d;
+      color: white;
+    }
+
+    .btn.like {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    /* MATCH POPUP */
+    .match-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+
+    .match-popup-content {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      animation: pop 0.3s ease-out;
+    }
+
+    .match-popup h2 {
+      margin-bottom: 20px;
+      font-size: 24px;
+      color: #4CAF50;
+    }
+
+    .match-popup button {
+      margin: 10px;
+      padding: 12px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .match-popup .message {
+      background-color: #2196F3;
+      color: white;
+    }
+
+    .match-popup .call {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    @keyframes pop {
+      0% {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>JobFlirt</h1>
+  <div class="job-container"></div>
+
+  <div class="buttons">
+    <button class="btn reject">👎</button>
+    <button class="btn like">❤️</button>
+  </div>
+
+  <!-- Match Popup -->
+  <div class="match-popup" id="matchPopup">
+    <div class="match-popup-content">
+      <h2>Het is een match!</h2>
+      <button class="message">Stuur een bericht</button>
+      <button class="call">Bellen</button>
+    </div>
+  </div>
+
+  <script>
+    const jobs = [
+      {
+        title: "Michael J",
+        company: "Reizen, fietsen",
+        salary: "18",
+        image: "https://media.istockphoto.com/id/1664876848/photo/happy-crossed-arms-and-portrait-of-asian-man-in-studio-smile-for-career-work-and-job.jpg?s=612x612&w=0&k=20&c=2vYaOMnlmzMEmB441bTWHUyeFXRIh56wE79QAhVWYBk="
+      },
+      {
+        title: "Davy L",
+        company: "ICT, voetbal",
+        salary: "21",
+        image: "https://www.davyliebe.nl/assets/img/about-visual.png"
+      },
+      {
+        title: "Sara U",
+        company: "Duiken",
+        salary: "16",
+        image: "https://img.freepik.com/free-psd/close-up-kid-expression-portrait_23-2150193262.jpg"
+      }
+    ];
+
+    let jobIndex = 0;
+    const jobContainer = document.querySelector(".job-container");
+    const rejectBtn = document.querySelector(".reject");
+    const likeBtn = document.querySelector(".like");
+    const matchPopup = document.getElementById("matchPopup");
+
+    function showNextJob(direction) {
+      const currentJob = document.querySelector(".job-card");
+      if (!currentJob) return;
+
+      const jobTitle = currentJob.querySelector("h2").textContent;
+
+      if (direction === "like" && jobTitle === "Davy L") {
+        matchPopup.style.display = "flex";
+      }
+
+      currentJob.style.transition = "transform 0.5s ease-out";
+      currentJob.style.transform = `translateX(${direction === 'like' ? '100%' : '-100%'}) rotate(${direction === 'like' ? '20deg' : '-20deg'})`;
+      currentJob.style.opacity = "0";
+
+      setTimeout(() => {
+        jobContainer.removeChild(currentJob);
+        jobIndex++;
+        if (jobIndex < jobs.length) {
+          addJobCard(jobs[jobIndex]);
+        } else {
+          jobContainer.innerHTML = "<h2>No more jobs!</h2>";
+        }
+      }, 300);
+    }
+
+    function addJobCard(job) {
+      const jobCard = document.createElement("div");
+      jobCard.classList.add("job-card");
+      jobCard.style.backgroundImage = `url('${job.image}')`;
+
+      jobCard.innerHTML = `
+        <div class="job-info">
+          <h2>${job.title}</h2>
+          <p>Hobby's: ${job.company}</p>
+          <p>Leeftijd: ${job.salary}</p>
+        </div>
+      `;
+
+      jobContainer.appendChild(jobCard);
+
+      let startX = 0, currentX = 0, isDragging = false;
+
+      jobCard.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        jobCard.style.transition = "none";
+      });
+
+      jobCard.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        currentX = e.clientX - startX;
+        jobCard.style.transform = `translateX(${currentX}px) rotate(${currentX / 10}deg)`;
+      });
+
+      jobCard.addEventListener("mouseup", () => {
+        isDragging = false;
+        jobCard.style.transition = "transform 0.3s ease-in-out";
+
+        if (currentX > 100) {
+          if (job.title === "Davy L") {
+            matchPopup.style.display = "flex";
+          }
+          showNextJob("like");
+        } else if (currentX < -100) {
+          showNextJob("reject");
+        } else {
+          jobCard.style.transform = "translateX(0) rotate(0)";
+        }
+      });
+
+      jobCard.addEventListener("mouseleave", () => {
+        if (isDragging) {
+          jobCard.dispatchEvent(new Event("mouseup"));
+        }
+      });
+
+      jobCard.addEventListener("touchstart", (e) => {
+        isDragging = true;
+        startX = e.touches[0].clientX;
+        jobCard.style.transition = "none";
+      });
+
+      jobCard.addEventListener("touchmove", (e) => {
+        if (!isDragging) return;
+        currentX = e.touches[0].clientX - startX;
+        jobCard.style.transform = `translateX(${currentX}px) rotate(${currentX / 10}deg)`;
+      });
+
+      jobCard.addEventListener("touchend", () => {
+        isDragging = false;
+        jobCard.style.transition = "transform 0.3s ease-in-out";
+
+        if (currentX > 100) {
+          if (job.title === "Davy L") {
+            matchPopup.style.display = "flex";
+          }
+          showNextJob("like");
+        } else if (currentX < -100) {
+          showNextJob("reject");
+        } else {
+          jobCard.style.transform = "translateX(0) rotate(0)";
+        }
+      });
+    }
+
+    rejectBtn.addEventListener("click", () => showNextJob("reject"));
+    likeBtn.addEventListener("click", () => {
+      const currentJob = document.querySelector(".job-card");
+      if (currentJob && currentJob.querySelector("h2").textContent === "Davy L") {
+        matchPopup.style.display = "flex";
+      }
+      showNextJob("like");
+    });
+
+    addJobCard(jobs[jobIndex]);
+  </script>
+
+</body>
+</html>
